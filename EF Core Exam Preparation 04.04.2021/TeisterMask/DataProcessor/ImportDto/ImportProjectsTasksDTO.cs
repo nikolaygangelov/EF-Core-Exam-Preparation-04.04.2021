@@ -24,11 +24,11 @@ namespace TeisterMask.DataProcessor.ImportDto
         [Required]
         [XmlElement("ExecutionType")]
         [Range(0, 3)]
-        public int ExecutionType { get; set; }
+        public int ExecutionType { get; set; } //presented as "int" in the given file
 
         [Required]
         [XmlElement("LabelType")]
         [Range(0, 4)]
-        public int LabelType { get; set; }
+        public int LabelType { get; set; } //presented as "int" in the given file
     }
 }
