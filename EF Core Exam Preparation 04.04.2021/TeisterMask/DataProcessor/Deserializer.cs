@@ -26,24 +26,31 @@ namespace TeisterMask.DataProcessor
 
         public static string ImportProjects(TeisterMaskContext context, string xmlString)
         {
+            //using Data Transfer Object Class to map it with Projects
             var serializer = new XmlSerializer(typeof(ImportProjectsDTO[]), new XmlRootAttribute("Projects"));
+
+            //Deserialize method needs TextReader object to convert/map 
             using StringReader inputReader = new StringReader(xmlString);
             var projectsArrayDTOs = (ImportProjectsDTO[])serializer.Deserialize(inputReader);
 
+            //using StringBuilder to gather all info in one string
             StringBuilder sb = new StringBuilder();
+
+            //creating List where all valid projects can be kept
             List<Project> projectsXML = new List<Project>();
 
             foreach (ImportProjectsDTO projectDTO in projectsArrayDTOs)
             {
-
+                //validating info for project from data
                 if (!IsValid(projectDTO))
                 {
                     sb.AppendLine(ErrorMessage);
                     continue;
                 }
 
+                //validating dates
                 DateTime openDate;
-                if (!DateTime.TryParseExact(projectDTO.OpenDate, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out openDate))
+                if (!DateTime.TryParseExact(projectDTO.OpenDate, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out openDate)) //culture-independent format
                 {
                     sb.AppendLine(ErrorMessage);
                     continue;
@@ -62,8 +69,10 @@ namespace TeisterMask.DataProcessor
                     dueDate = dueDate2;
                 }
 
+                //creating a valid project
                 Project projectToAdd = new Project
                 {
+                    //using identical properties in order to map successfully
                     Name = projectDTO.Name,
                     OpenDate = openDate,
                     DueDate = dueDate
@@ -71,12 +80,14 @@ namespace TeisterMask.DataProcessor
 
                 foreach (var task in projectDTO.Tasks)
                 {
+                    //validating tasks
                     if (!IsValid(task))
                     {
                         sb.AppendLine(ErrorMessage);
                         continue;
                     }
 
+                    //validating task dates
                     DateTime taskOpenDate;
                     DateTime taskDueDate;
                     if (!DateTime.TryParseExact(task.OpenDate, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out taskOpenDate)
@@ -98,13 +109,15 @@ namespace TeisterMask.DataProcessor
                         continue;
                     }
 
+                    //adding valid task
                     projectToAdd.Tasks.Add(new Task()
                     {
+                        //using identical properties in order to map successfully
                         Name = task.Name,
                         OpenDate = taskOpenDate,
                         DueDate = taskDueDate,
-                        ExecutionType = (ExecutionType)task.ExecutionType,
-                        LabelType = (LabelType)task.LabelType
+                        ExecutionType = (ExecutionType)task.ExecutionType, //casting from "int"
+                        LabelType = (LabelType)task.LabelType //casting from "int"
                     });
                 }
 
@@ -115,8 +128,10 @@ namespace TeisterMask.DataProcessor
 
             context.Projects.AddRange(projectsXML);
 
+            //actual importing info from data
             context.SaveChanges();
 
+            //using TrimEnd() to get rid of white spaces
             return sb.ToString().TrimEnd();
         }
 
