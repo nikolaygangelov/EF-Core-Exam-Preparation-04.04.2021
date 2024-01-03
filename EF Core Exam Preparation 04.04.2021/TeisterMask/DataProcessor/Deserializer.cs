@@ -137,26 +137,33 @@ namespace TeisterMask.DataProcessor
 
         public static string ImportEmployees(TeisterMaskContext context, string jsonString)
         {
+            //using Data Transfer Object Class to map it with employees
             var employeesArray = JsonConvert.DeserializeObject<ImportEmployeesDTO[]>(jsonString);
 
+            //using StringBuilder to gather all info in one string
             StringBuilder sb = new StringBuilder();
+
+            //creating List where all valid emoloyees can be kept
             List<Employee> employeesList = new List<Employee>();
 
+            //taking unique tasks
             var existingTasksIds = context.Tasks
                 .Select(e => e.Id)
                 .ToArray();
 
             foreach (ImportEmployeesDTO employeeDTO in employeesArray)
             {
-
+                //validating info for employee from data
                 if (!IsValid(employeeDTO))
                 {
                     sb.AppendLine(ErrorMessage);
                     continue;
                 }
 
+                //creating a valid employee
                 Employee employeeToAdd = new Employee()
                 {
+                    //using identical properties in order to map successfully
                     Username = employeeDTO.Username,
                     Email = employeeDTO.Email,
                     Phone = employeeDTO.Phone
@@ -166,15 +173,17 @@ namespace TeisterMask.DataProcessor
 
                 foreach (int taskId in employeeDTO.Tasks.Distinct())
                 {
+                    //validating unique employees
                     if (!existingTasksIds.Contains(taskId))
                     {
                         sb.AppendLine(ErrorMessage);
                         continue;
                     }
 
+                    //adding valid EmployeeTask
                     employeeToAdd.EmployeesTasks.Add(new EmployeeTask()
                     {
-                        //Employee = employeeToAdd,// !!!!!!!!!!!
+                        //Employee = employeeToAdd,
                         TaskId = taskId
                     });
 
@@ -185,8 +194,11 @@ namespace TeisterMask.DataProcessor
             }
 
             context.Employees.AddRange(employeesList);
+
+            //actual importing info from data
             context.SaveChanges();
 
+            //using TrimEnd() to get rid of white spaces
             return sb.ToString().TrimEnd();
         }
 
